@@ -19,15 +19,22 @@ def clean_data(df):
 
     return df
 
-def get_user_input():
+def get_user_input(df):
     '''
     获取用户输入
     '''
-    part1 = '欢迎来到神奇宝贝数据世界，请输入要查询的神奇宝贝'
-    part2 = '或输入hp、atk、def、spatk、spdef、spd查看排名前十的Pokemon：\n'
-    user_input = input('{}，{}'.format(part1, part2)).title()
+    while True:
+        part1 = '欢迎来到Pokemon数据世界，请输入要查询的Pokemon'
+        part2 = '或输入hp、atk、def、spatk、spdef、spd查看排名前十的Pokemon：\n'
 
-    return  user_input
+        user_input = input('{}，{}'.format(part1, part2)).title()
+
+        if user_input.title() not in list(df['name']):
+            continue
+
+        break
+
+    return user_input
 
 def select_pokemon(df, user_input):
     '''
@@ -85,11 +92,11 @@ def output_pokemon_stats(selected_pokemon, pokemon_stats):
 
 def main():
     while True:
-        # 获取用户输入
-        user_input = get_user_input()
-
         # 加载Pokemon数据集
         df = load_data()
+
+        # 获取用户输入
+        user_input = get_user_input(df)
 
         # 获取被选中的Pokemon
         selected = select_pokemon(df, user_input)
