@@ -32,21 +32,27 @@ def get_user_input(df):
     获取用户输入
     '''
     while True:
-        part1 = '欢迎来到Pokemon数据世界，请输入要查询的Pokemon'
-        part2 = '或输入total、hp、atk、def、spatk、spdef、spd查看排名前十的Pokemon：\n'
+        part0 = '欢迎来到Pokemon世界'
+        part1 = '若要查询Pokemon，请输入Pokemon名称'
+        part2 = '或输入total、hp、atk、def、spatk、spdef、spd查看排名前十的Pokemon'
+        part3 = '或输入"q"退出'
+        print('{}\n{}\n{}\n{}'.format(part0, part1, part2, part3))
+        
+        user_input = input('请输入要查询的内容：\n')
 
-        user_input = input('{}，{}'.format(part1, part2))
+        # 判断是否直接退出
+        if user_input.lower() == 'q':
+            break
 
         # 判断用户输入是否正确
-        condition_1 = user_input.title() in list(df['name'])
-        condition_2 = user_input.lower() in TOP_STATS.keys()
+        condition_1 = user_input.title() not in list(df['name'])
+        condition_2 = user_input.lower() not in TOP_STATS.keys()
         if condition_1 and condition_2:
             # 若不正确的话重新输入
             continue
-
-        break
-
-    return user_input
+        else:
+            # 若正确则返回用户输入
+            return user_input
 
 def select_pokemon(df, user_input):
     '''
@@ -55,7 +61,7 @@ def select_pokemon(df, user_input):
     # 判断用户输入
     if user_input.lower() in TOP_STATS.keys():
         flag = user_input.lower()
-        selected = df.sort_values(by=[TOP_STATS[user_input]],
+        selected = df.sort_values(by=[TOP_STATS[flag]],
                                   ascending=False)[:10]
     else:
         flag = 'pokemon'
@@ -106,7 +112,10 @@ def get_top_ten_stat(selected_pokemon, stat):
     x = PrettyTable()
 
     # 获取top10的Pokemon名字
-    x.add_column(stat, [name for name in selected_pokemon.name.values])
+    x.add_column(TOP_STATS[stat],
+                 [name for name in selected_pokemon.name.values])
+    x.add_column('stat_value',
+                 [value for value in selected_pokemon[TOP_STATS[stat]].values])
 
     print(x)
 
@@ -131,13 +140,16 @@ def main():
         # 获取用户输入
         user_input = get_user_input(df)
 
-        # 获取被选中的Pokemon
-        selected, flag = select_pokemon(df, user_input)
+        if user_input:
+            # 获取被选中的Pokemon
+            selected, flag = select_pokemon(df, user_input)
 
-        # 获取Pokemon各项信息
-        get_pokemon_info(selected, flag)
+            # 获取Pokemon各项信息
+            get_pokemon_info(selected, flag)
+        else:
+            break
 
-        restart = input('\n输入任意键加回车键继续探索或输入"q"加回车键退出\n')
+        restart = input('\n输入任意键加回车继续探索或输入"q"加回车退出\n')
         if restart.lower() == 'q':
             break
 
