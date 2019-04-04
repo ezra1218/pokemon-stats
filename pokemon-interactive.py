@@ -1,6 +1,14 @@
 import pandas as pd
 from prettytable import PrettyTable
 
+TOP_STATS = {'total': 'base_total',
+             'hp': 'hp',
+             'atk': 'attack',
+             'def': 'defense',
+             'spatk': 'sp_attack',
+             'spdef': 'sp_defense',
+             'spd': 'speed'}
+
 def load_data():
     '''
     加载数据
@@ -25,11 +33,15 @@ def get_user_input(df):
     '''
     while True:
         part1 = '欢迎来到Pokemon数据世界，请输入要查询的Pokemon'
-        part2 = '或输入hp、atk、def、spatk、spdef、spd查看排名前十的Pokemon：\n'
+        part2 = '或输入total、hp、atk、def、spatk、spdef、spd查看排名前十的Pokemon：\n'
 
-        user_input = input('{}，{}'.format(part1, part2)).title()
+        user_input = input('{}，{}'.format(part1, part2))
 
-        if user_input.title() not in list(df['name']):
+        # 判断用户输入是否正确
+        condition_1 = user_input.title() in list(df['name'])
+        condition_2 = user_input.lower() in TOP_STATS.keys()
+        if condition_1 and condition_2:
+            # 若不正确的话重新输入
             continue
 
         break
@@ -40,42 +52,63 @@ def select_pokemon(df, user_input):
     '''
     根据用户输入选择Pokemon
     '''
-    selected = df[df['name'] == user_input]
-    return selected
+    # 判断用户输入
+    if user_input.lower() in TOP_STATS.keys():
+        flag = user_input.lower()
+        selected = df.sort_values(by=[TOP_STATS[user_input]],
+                                  ascending=False)[:10]
+    else:
+        flag = 'pokemon'
+        selected = df[df['name'] == user_input.title()]
 
-def get_pokemon_info(selected):
+    return selected, flag
+
+def get_pokemon_info(selected, flag):
     '''
     获取被选中的Pokemon信息
     '''
+    if flag == 'pokemon':
+        # 基础信息
+        base_info = ["name", "classfication", "type1", "type2", "abilities"]
+        output_pokemon_stats(selected, base_info)
 
-    # 基础信息
-    base_info = ["name", "classfication", "type1", "type2", "abilities"]
-    output_pokemon_stats(selected, base_info)
+        # 种族值信息
+        stat_info = ["base_total", "hp", "attack", "defense",
+                     "sp_attack", "sp_defense", 'speed']
+        output_pokemon_stats(selected, stat_info)
 
-    # 种族值信息
-    stat_info = ["base_total", "hp", "attack", "defense",
-                 "sp_attack", "sp_defense", 'speed']
-    output_pokemon_stats(selected, stat_info)
+        # 其他信息
+        other_info = ["height_m", "weight_kg", "base_happiness",
+                      "capture_rate", "base_egg_steps", "experience_growth"]
+        output_pokemon_stats(selected, other_info)
 
-    # 其他信息
-    other_info = ["height_m", "weight_kg", "base_happiness",
-                  "capture_rate", "base_egg_steps", "experience_growth"]
-    output_pokemon_stats(selected, other_info)
+        # 属性相克1
+        against_info_1 = ["against_bug", "against_dark", "against_dragon",
+                         "against_electric", "against_fairy", "against_fight"]
+        output_pokemon_stats(selected, against_info_1)
 
-    # 属性相克1
-    against_info_1 = ["against_bug", "against_dark", "against_dragon",
-                     "against_electric", "against_fairy", "against_fight"]
-    output_pokemon_stats(selected, against_info_1)
+        # 属性相克2
+        against_info_2 = ["against_fire", 'against_flying', "against_ghost",
+                         "against_grass", "against_ground", "against_ice"]
+        output_pokemon_stats(selected, against_info_2)
 
-    # 属性相克2
-    against_info_2 = ["against_fire", 'against_flying', "against_ghost",
-                     "against_grass", "against_ground", "against_ice"]
-    output_pokemon_stats(selected, against_info_2)
+        # 属性相克3
+        against_info_3 = ["against_normal", "against_poison", "against_psychic",
+                         "against_rock", "against_steel", "against_water"]
+        output_pokemon_stats(selected, against_info_3)
+    else:
+        get_top_ten_stat(selected, flag)
 
-    # 属性相克3
-    against_info_3 = ["against_normal", "against_poison", "against_psychic",
-                     "against_rock", "against_steel", "against_water"]
-    output_pokemon_stats(selected, against_info_3)
+def get_top_ten_stat(selected_pokemon, stat):
+    '''
+    获取种族值前10的Pokemon
+    '''
+    x = PrettyTable()
+
+    # 获取top10的Pokemon名字
+    x.add_column(stat, [name for name in selected_pokemon.name.values])
+
+    print(x)
 
 def output_pokemon_stats(selected_pokemon, pokemon_stats):
     '''
@@ -99,13 +132,13 @@ def main():
         user_input = get_user_input(df)
 
         # 获取被选中的Pokemon
-        selected = select_pokemon(df, user_input)
+        selected, flag = select_pokemon(df, user_input)
 
         # 获取Pokemon各项信息
-        get_pokemon_info(selected)
+        get_pokemon_info(selected, flag)
 
-        restart = input('\n输入‘y’键继续探索或按输入任意键退出\n')
-        if restart.lower() != 'y':
+        restart = input('\n输入任意键加回车键继续探索或输入"q"加回车键退出\n')
+        if restart.lower() == 'q':
             break
 
 
