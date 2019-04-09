@@ -1,5 +1,10 @@
 import pandas as pd
 from prettytable import PrettyTable
+from PIL import Image
+import os
+import requests
+
+DEFAULT_PATH = './pokemon-image/'
 
 TOP_STATS = {'total': 'base_total',
              'hp': 'hp',
@@ -13,7 +18,7 @@ def load_data():
     '''
     加载数据
     '''
-    file_name = '/Users/Morris/Desktop/Udacity/data_analysis/my_project/01-pokemon/pokemon.csv'
+    file_name = '/Users/Morris/Desktop/Udacity/data_analysis/my_project/01-pokemon/pokemon3.csv'
     df = pd.read_csv(file_name)
 
     return clean_data(df)
@@ -32,12 +37,12 @@ def get_user_input(df):
     获取用户输入
     '''
     while True:
-        part0 = '欢迎来到Pokemon世界'
+        part0 = '欢迎来到 Pokemon 的世界'
         part1 = '若要查询Pokemon，请输入Pokemon名称'
         part2 = '或输入total、hp、atk、def、spatk、spdef、spd查看排名前十的Pokemon'
         part3 = '或输入"q"退出'
         print('{}\n{}\n{}\n{}'.format(part0, part1, part2, part3))
-        
+
         user_input = input('请输入要查询的内容：\n')
 
         # 判断是否直接退出
@@ -52,7 +57,7 @@ def get_user_input(df):
             continue
         else:
             # 若正确则返回用户输入
-            return user_input
+            return user_input.title()
 
 def select_pokemon(df, user_input):
     '''
@@ -65,7 +70,7 @@ def select_pokemon(df, user_input):
                                   ascending=False)[:10]
     else:
         flag = 'pokemon'
-        selected = df[df['name'] == user_input.title()]
+        selected = df[df['name'] == user_input]
 
     return selected, flag
 
@@ -132,6 +137,51 @@ def output_pokemon_stats(selected_pokemon, pokemon_stats):
 
     print(x)
 
+def wanna_show():
+    '''
+    判断用户是否像查看 Pokemon 图片
+    '''
+    part1 = '输入"img"加回车下载并查看该 Pokemon 的图片'
+    part2 = '输入任意键加回车返回上一级菜单'
+    user_input = input('{}\n{}:\n'.format(part1, part2))
+
+    return user_input.lower()
+
+def download_img(url):
+    '''
+    根据 img_link 下载 Pokemon 图片
+
+    params:
+        url: 需下载的图片链接
+    '''
+    r = requests.get(url, stream=True)
+
+    # 保存的文件名
+    file_name = url.split('/')[-1]
+
+    # 创建文件保存路径
+    if not os.path.exists(DEFAULT_PATH):
+        os.makedirs(DEFAULT_PATH)
+
+    # 文件路径
+    file_path = DEFAULT_PATH+file_name
+
+    # 需指定文件名，否则会出现 [Errno 21] Is a directory 错误
+    with open(file_path, 'wb') as f:
+        for chunk in r.iter_content(chunk_size=32):
+            f.write(chunk)
+
+    show_img(file_path)
+
+def show_img(file_path):
+    '''
+    展示 Pokemon 图片
+    '''
+    print('图片下载成功，以保存至 {}'.format(file_path))
+    img = Image.open(file_path)
+    img.show()
+
+
 def main():
     while True:
         # 加载Pokemon数据集
@@ -148,6 +198,13 @@ def main():
             get_pokemon_info(selected, flag)
         else:
             break
+
+        # 判断用户是否想查看当前 Pokemon 的图片
+        if wanna_show() == 'img':
+            # 获取当前 Pokemon 的 image url
+            print('请稍后，程序正在下载 {} ...'.format(user_input))
+            img_url = df[df['name'] == user_input]['img_url'].values[0]
+            download_img(img_url)
 
         restart = input('\n输入任意键加回车继续探索或输入"q"加回车退出\n')
         if restart.lower() == 'q':
