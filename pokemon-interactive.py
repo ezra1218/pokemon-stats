@@ -36,12 +36,12 @@ def load_data():
     '''
     加载数据
     '''
-    file_name = '/Users/Morris/Desktop/Udacity/data_analysis/my_project/01-pokemon/pokemon.csv'
+    file_name = '/Users/Morris/Documents/Repositories/pokemon-stats/POKEMONS_STATS.csv'
     df = pd.read_csv(file_name)
 
     return clean_data(df)
 
-def clean_data(df):
+# def clean_data(df):
     '''
     清理数据
     '''
