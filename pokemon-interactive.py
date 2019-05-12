@@ -1,9 +1,9 @@
-import pandas as pd
-from prettytable import PrettyTable
-from PIL import Image
 import os
 import requests
+import pandas as pd
+from PIL import Image
 from settings import *
+from prettytable import PrettyTable
 
 def load_data():
     '''
@@ -40,7 +40,7 @@ def get_user_input(df):
         user_input = input(FIRST_INPUT)
 
         # 判断是否直接退出
-        if user_input.lower() == 'q' or user_input == '':
+        if user_input.lower() == EXIT or user_input == '':
             os._exit(0)
 
         # 判断用户输入是否正确
@@ -119,7 +119,7 @@ def get_top_ten_stat(selected_pokemon, user_input):
 
     # 获取top10的Pokemon名字
     x.add_column('Rank',
-                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+                 [rank for rank in range(1, 11)])
     x.add_column('English Name',
                  [name for name in selected_pokemon.english_name.values])
     x.add_column('Chinese Name',
@@ -234,7 +234,7 @@ def main():
                     selected_pokemon, flag = select_pokemon(df, user_input)
                     # 获取 Pokemon 各项信息
                     get_pokemon_info(selected_pokemon)
-                elif user_input.lower() == 'q': # 输入 "q" 退出程序
+                elif user_input.lower() == EXIT: # 输入 "q" 退出程序
                     break
                 else: # 输入其他重新开始程序
                     main()
@@ -251,7 +251,7 @@ def main():
                 main()
 
         restart = input(EXIT_INPUT)
-        if restart.lower() == 'q':
+        if restart.lower() == EXIT:
             break
 
 
