@@ -3,34 +3,7 @@ from prettytable import PrettyTable
 from PIL import Image
 import os
 import requests
-
-DEFAULT_PATH = './pokemon-image/'
-
-TOP_STATS = {'2': 'hp',
-             '3': 'attack',
-             '4': 'defense',
-             '5': 'sp_attack',
-             '6': 'sp_defense',
-             '7': 'speed',
-             '8': 'base_total',
-             '9': 'height_m',
-             '10': 'weight_kg',
-             '11': 'base_happiness',
-             '12': 'is_legendary'
-}
-
-STATS_DICT = {'hp': 'Hp',
-              'attack': 'Attack',
-              'defense': 'Defense',
-              'sp_attack': 'Special Attack',
-              'sp_defense': 'Special Defense',
-              'speed': 'Speed',
-              'base_total': 'Total',
-              'height_m': 'Height',
-              'weight_kg': 'Weight',
-              'base_happiness': 'Base Happiness',
-              'is_legendary': 'Legendary'
-}
+from settings import *
 
 def load_data():
     '''
@@ -39,16 +12,8 @@ def load_data():
     file_name = '/Users/Morris/Documents/Repositories/pokemon-stats/POKEMONS_STATS.csv'
     df = pd.read_csv(file_name)
 
-    return clean_data(df)
-
-# def clean_data(df):
-    '''
-    清理数据
-    '''
-    # 删除 classfication 后面的 Pokemon 字符
-    df.classfication = df.classfication.map(lambda x:x[:-8])
-
     return df
+
 
 def display_intro_table():
     '''
@@ -59,9 +24,9 @@ def display_intro_table():
     x.field_names = ["I", 'II', "III", "IV"]
     x.add_row(['1.Name', '2.Hp', '3.Attack', '4.Defense'])
     x.add_row(['5.Special Atk', '6.Special Def', '7.Speed', '8.Total'])
-    x.add_row(['9.Tallest', '10.Heaviest', '11.Base Happiness', '12.Legendary'])
 
     print(x)
+
 
 def get_user_input(df):
     '''
@@ -79,7 +44,7 @@ def get_user_input(df):
             os._exit(0)
 
         # 判断用户输入是否正确
-        condition_1 = user_input.title() not in list(df['name'])
+        condition_1 = user_input.title() not in list(df['english_name'])
         condition_2 = user_input.lower() not in TOP_STATS.keys()
         if condition_1 and condition_2:
             # 若不正确的话重新输入
@@ -89,91 +54,95 @@ def get_user_input(df):
             # 若正确则返回用户输入
             return user_input.title()
 
+
 def select_pokemon(df, user_input):
     '''
-    根据用户输入选择Pokemon
+    根据用户输入选择 Pokemon
     '''
     # 获取被选择的 Pokemon
-    selected = df[df['name'] == user_input]
-    flag = 'detail'
+    selected = df[df['english_name'] == user_input]
+    flag = FLAG_DETAIL
 
     return selected, flag
+
 
 def get_pokemon_rank(df, user_input):
     '''
     获取 Pokemon 的排名信息
     '''
-    if user_input != '12':
-        selected = df.sort_values(by=[TOP_STATS[user_input]], ascending=False)[:10]
-    else:
-        selected = df.query('is_legendary == 1')
-    flag = 'rank'
+    selected = df.sort_values(by=[TOP_STATS[user_input]], ascending=False)[:10]
 
-    return selected, flag
+    return selected
+
 
 def get_pokemon_info(selected):
     '''
     获取被选中的Pokemon信息
     '''
     # 基础信息
-    base_info = ["name", "classfication", "type1", "type2", "abilities"]
-    display_pokemon_stats(selected, base_info)
+    base_info = ["chinese_name", "english_name", "category",
+                 "type_1", "type_2", "ability_1", "ability_2"]
+    get_pokemon_stats(selected, base_info)
 
     # 种族值信息
-    stat_info = ["base_total", "hp", "attack", "defense",
-                 "sp_attack", "sp_defense", 'speed']
-    display_pokemon_stats(selected, stat_info)
+    stat_info = ["total", "hp", "atk", "defense",
+                 "spatk", "spdef", 'speed']
+    get_pokemon_stats(selected, stat_info)
 
     # 其他信息
-    other_info = ["height_m", "weight_kg", "base_happiness",
-                  "capture_rate", "base_egg_steps", "experience_growth"]
-    display_pokemon_stats(selected, other_info)
+    other_info = ["height_m", "weight_kg", "catch_rate",
+                  "hatch_time", "exp_100"]
+    get_pokemon_stats(selected, other_info)
 
     # 属性相克1
     against_info_1 = ["against_bug", "against_dark", "against_dragon",
-                     "against_electric", "against_fairy", "against_fight"]
-    display_pokemon_stats(selected, against_info_1)
+                      "against_electric", "against_fairy", "against_fight"]
+    get_pokemon_stats(selected, against_info_1)
 
     # 属性相克2
     against_info_2 = ["against_fire", 'against_flying', "against_ghost",
-                     "against_grass", "against_ground", "against_ice"]
-    display_pokemon_stats(selected, against_info_2)
+                      "against_grass", "against_ground", "against_ice"]
+    get_pokemon_stats(selected, against_info_2)
 
     # 属性相克3
     against_info_3 = ["against_normal", "against_poison", "against_psychic",
-                     "against_rock", "against_steel", "against_water"]
-    display_pokemon_stats(selected, against_info_3)
+                      "against_rock", "against_steel", "against_water"]
+    get_pokemon_stats(selected, against_info_3)
 
-def display_top_ten_stat(selected_pokemon, pokemon_stat):
+
+def get_top_ten_stat(selected_pokemon, user_input):
     '''
     获取种族值前10的Pokemon
     '''
+    flag = FLAG_TOP_TEN
     x = PrettyTable()
 
     # 获取top10的Pokemon名字
-    if pokemon_stat != '12':
-        x.add_column(TOP_STATS[pokemon_stat],
-                     [name for name in selected_pokemon.name.values])
-        x.add_column('stat_value',
-                     [value for value in selected_pokemon[TOP_STATS[pokemon_stat]].values])
-        print(x.get_string(title='Top 10 {} Pokemons'.format(STATS_DICT[TOP_STATS[pokemon_stat]])))
-    else:
-        x.add_column('ALL LEGENDARY POKEMONS',
-                     [name for name in selected_pokemon.name.values])
-        print(x)
+    x.add_column('English Name',
+                 [name for name in selected_pokemon.english_name.values])
+    x.add_column('Chinese Name',
+                 [name for name in selected_pokemon.chinese_name.values])
+    x.add_column(STATS_DICT[TOP_STATS[user_input]],
+                 [value for value in selected_pokemon[TOP_STATS[user_input]].values])
+    x.add_column('Generation',
+                 [GENERATION[value] for value in selected_pokemon.generation.values])
 
-def display_pokemon_stats(selected_pokemon, pokemon_stats):
+    return x, flag
+
+
+def get_pokemon_stats(selected_pokemon, user_input):
     '''
-    输出被选中的Pokemon信息
+    获取被选中的Pokemon信息
     '''
     # 以表格的形式输出
     x = PrettyTable()
 
-    for i in range(len(pokemon_stats)):
-        x.add_column(pokemon_stats[i],
-                     selected_pokemon[pokemon_stats[i]].values)
+    for i in range(len(user_input)):
+        x.add_column(user_input[i],
+                     selected_pokemon[user_input[i]].values)
 
-    print(x)
+    display_pokemon_info(x, user_input)
+
 
 def is_display_image():
     '''
@@ -184,6 +153,7 @@ def is_display_image():
     user_input = input('{}\n{}:\n'.format(part1, part2))
 
     return user_input.lower()
+
 
 def download_image(url):
     '''
@@ -211,6 +181,7 @@ def download_image(url):
 
     display_image(file_path)
 
+
 def display_image(file_path):
     '''
     展示 Pokemon 图片
@@ -218,6 +189,18 @@ def display_image(file_path):
     print('图片下载成功，以保存至 {}'.format(file_path))
     img = Image.open(file_path)
     img.show()
+
+
+def display_pokemon_info(x, user_input, flag=None):
+    '''
+    展示获取的 Pokemon 信息
+    '''
+    if flag == FLAG_TOP_TEN:
+        print(x.get_string(title='Top 10 {} Pokemons'.format(
+            STATS_DICT[TOP_STATS[user_input]])))
+    else:
+        print(x)
+
 
 def main():
     while True:
@@ -228,32 +211,47 @@ def main():
         user_input = get_user_input(df)
 
         # 查询单个 Pokemon 详细信息
-        if user_input in list(df['name']):
+        if user_input in list(df['english_name']):
             # 查找被选中的 Pokemon
-            selected, flag = select_pokemon(df, user_input)
+            selected_pokemon, flag = select_pokemon(df, user_input)
             # 获取 Pokemon 各项信息
-            get_pokemon_info(selected)
+            get_pokemon_info(selected_pokemon)
 
-        # 查询 Pokemon 的排名
+        # 查询 Pokemon 的前十排名
         if user_input in TOP_STATS.keys():
             # 查找符合条件的 Pokemon
-            selected, flag = get_pokemon_rank(df, user_input)
+            selected_pokemon = get_pokemon_rank(df, user_input)
             # 展示符合条件的 Pokemon
-            display_top_ten_stat(selected, user_input)
+            x, flag = get_top_ten_stat(selected_pokemon, user_input)
+            display_pokemon_info(x, flag, user_input)
 
-        if flag == 'detail':
+            input_p1 = '输入 Pokemon 名字可查询该 Pokemon 的详细信息\n'
+            input_p2 = '或输入任意键加回车返回上一层\n'
+            input_p3 = '或输入"q"退出\n'
+            u_input = input('{}{}{}'.format(input_p1, input_p2, input_p3))
+
+            if type(u_input) == str:
+                if u_input.title() in list(df['english_name']):
+                    # 查找被选中的 Pokemon
+                    selected_pokemon, flag = select_pokemon(df, u_input)
+                    # 获取 Pokemon 各项信息
+                    get_pokemon_info(selected_pokemon)
+
+        if flag == FLAG_DETAIL:
             # 判断用户是否想查看当前 Pokemon 的图片
-            if is_display_image() == 'img': # 如果用户想要查看 image
+            if is_display_image() == 'img':  # 如果用户想要查看 image
                 # 获取当前 Pokemon 的 image url
                 print('请稍后，程序正在下载 {} ...'.format(user_input))
-                img_url = df[df['name'] == user_input]['img_url'].values[0]
+                img_url = df[df['english_name'] ==
+                             user_input]['image_url'].values[0]
                 download_image(img_url)
-            else: # 不查看 image 重新执行程序
+            else:  # 不查看 image 重新执行程序
                 main()
 
         restart = input('\n输入任意键加回车继续探索或输入"q"加回车退出\n')
         if restart.lower() == 'q':
             break
 
+
 if __name__ == "__main__":
-	main()
+    main()
