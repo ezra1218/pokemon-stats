@@ -37,7 +37,7 @@ def get_user_input(df):
         display_intro_table()
 
         # 获取用户输入
-        user_input = input('请输入Pokemon的名字或输入对应的数字查看信息或输入"q"退出：\n')
+        user_input = input(FIRST_INPUT)
 
         # 判断是否直接退出
         if user_input.lower() == 'q' or user_input == '':
@@ -118,6 +118,8 @@ def get_top_ten_stat(selected_pokemon, user_input):
     x = PrettyTable()
 
     # 获取top10的Pokemon名字
+    x.add_column('Rank',
+                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     x.add_column('English Name',
                  [name for name in selected_pokemon.english_name.values])
     x.add_column('Chinese Name',
@@ -148,16 +150,14 @@ def is_display_image():
     '''
     判断用户是否像查看 Pokemon 图片
     '''
-    part1 = '输入"img"加回车下载并查看该 Pokemon 的图片'
-    part2 = '输入任意键加回车返回上一级菜单'
-    user_input = input('{}\n{}:\n'.format(part1, part2))
+    user_input = input(DISPLAY_IMAGE_INPUT)
 
     return user_input.lower()
 
 
 def download_image(url):
     '''
-    根据 img_link 下载 Pokemon 图片
+    根据 imgage_url 下载 Pokemon 图片
 
     params:
         url: 需下载的图片链接
@@ -224,31 +224,33 @@ def main():
             # 展示符合条件的 Pokemon
             x, flag = get_top_ten_stat(selected_pokemon, user_input)
             display_pokemon_info(x, flag, user_input)
+            # 查找排名前十的 Pokemon 的详细信息
+            user_input = input(DISPLAY_DETAIL_INPUT)
 
-            input_p1 = '输入 Pokemon 名字可查询该 Pokemon 的详细信息\n'
-            input_p2 = '或输入任意键加回车返回上一层\n'
-            input_p3 = '或输入"q"退出\n'
-            u_input = input('{}{}{}'.format(input_p1, input_p2, input_p3))
-
-            if type(u_input) == str:
-                if u_input.title() in list(df['english_name']):
+            if type(user_input) == str:
+                user_input = user_input.title()
+                if user_input in list(df['english_name']):
                     # 查找被选中的 Pokemon
-                    selected_pokemon, flag = select_pokemon(df, u_input)
+                    selected_pokemon, flag = select_pokemon(df, user_input)
                     # 获取 Pokemon 各项信息
                     get_pokemon_info(selected_pokemon)
+                elif user_input.lower() == 'q': # 输入 "q" 退出程序
+                    break
+                else: # 输入其他重新开始程序
+                    main()
 
         if flag == FLAG_DETAIL:
             # 判断用户是否想查看当前 Pokemon 的图片
             if is_display_image() == 'img':  # 如果用户想要查看 image
                 # 获取当前 Pokemon 的 image url
-                print('请稍后，程序正在下载 {} ...'.format(user_input))
+                print('请稍后，正在下载 {} ...'.format(user_input))
                 img_url = df[df['english_name'] ==
                              user_input]['image_url'].values[0]
                 download_image(img_url)
             else:  # 不查看 image 重新执行程序
                 main()
 
-        restart = input('\n输入任意键加回车继续探索或输入"q"加回车退出\n')
+        restart = input(EXIT_INPUT)
         if restart.lower() == 'q':
             break
 
